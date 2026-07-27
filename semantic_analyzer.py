@@ -12,8 +12,8 @@ class SemanticAnalyzer:
     def __init__(self):
         self.diagnostics: List[Diagnostic] = []
         self.loop_depth: int = 0
-        self.active_sensors = set[str] = set()
-        self.observed_sensors = set[str] = set()
+        self.active_sensors: set[str] = set()
+        self.observed_sensors: set[str] = set()
         
     def error(self, msg, pos):
         self.diagnostics.append(Diagnostic('error', msg, pos['line'], pos['col']))
@@ -98,11 +98,11 @@ class SemanticAnalyzer:
         elif t == 'Break':           self._check_break(node)
 
     def _check_block(self, body: list):
-        """Walk a block, flagging dead code after break or stop."""
+        """Walk a block, flagging dead code after break."""
         terminated = False
         for stmt in body:
             self._check_statement(stmt, after_terminator=terminated)
-            if stmt['type'] in ('Break', 'Stop'):
+            if stmt['type'] == 'Break':
                 terminated = True
 
     # --- Individual statement checks ---

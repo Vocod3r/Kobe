@@ -47,7 +47,7 @@ def classify_word(value: str) -> str:
     if value in POLICY_KEYS: return 'POLICY_KEY'
     if value in DIRECTIONS: return 'DIRECTION'
     if value in SPEEDS: return 'SPEED'
-    if value in COLOURS: return 'COLOUR'
+    if value in COLOURS: return 'COLOUR_VAL'
     if value in UNITS: return 'UNIT'
     if value in BOOLEANS: return value.upper()
     return 'IDENTIFIER'
@@ -70,7 +70,7 @@ def tokenize(source: str) -> list[Token]:
         if kind == 'NUMBER':
             value = float(value) if '.' in value else int(value)
             tokens.append(Token(kind, value, line, column))
-        if kind == 'WORD':
+        elif kind == 'WORD':
             kind = classify_word(value)
             tokens.append(Token(kind, value, line, column))
         elif kind == 'NEWLINE':
@@ -82,6 +82,8 @@ def tokenize(source: str) -> list[Token]:
             raise LexError(f"Unknown token: {value}", line, column)
         else:
             tokens.append(Token(kind, value, line, column))
+
+    tokens.append(Token('EOF', None, line, len(source) - line_start + 1))
     return tokens
 
 if __name__ == '__main__':
@@ -99,4 +101,3 @@ if __name__ == '__main__':
     """
     for tok in tokenize(source):
         print(tok)
-    
