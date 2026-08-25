@@ -24,6 +24,18 @@ class Compiler:
     # --- Program ---
 
     def compile_program(self, ast: dict):
+        if ast.get('algorithm'):
+            self.emit({'op': 'ALGORITHM', 'name': ast['algorithm']['name']})
+
+        if ast.get('hardware'):
+            hw = ast['hardware']
+            self.emit({
+                'op':     'HARDWARE',
+                'target': hw.get('target', 'EV3'),
+                'motors': hw.get('motors', []),
+                'sensors': hw.get('sensors', []),
+            })
+
         self.emit({
             'op':         'POLICY',
             'curiosity':  self.priorities['curiosity'],

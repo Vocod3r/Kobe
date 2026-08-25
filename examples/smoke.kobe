@@ -1,0 +1,25 @@
+algorithm SAC
+
+hardware {
+    target: EV3
+    motors: [A, B]
+    sensors: [dist@1, colour@2]
+}
+
+policy {
+    curiosity = 0.3;
+    safety = 0.6;
+    comfort = 0.5;
+    efficiency = 0.4;
+}
+
+walk forward slowly;
+
+observe(dist, colour) {
+    dist < 20 cm then { stop; }
+    colour is red then { stop; }
+    dist >= 20 cm then { walk forward normally; }
+}
+
+turn left;
+walk forward;

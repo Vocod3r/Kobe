@@ -35,6 +35,10 @@ class SemanticAnalyzer:
         has_movement   = False
         has_observe    = False
         has_policy     = node['policy'] is not None
+        declared_sensors: set[str] = set()
+
+        if node.get('hardware') and node['hardware'].get('sensors'):
+            declared_sensors = {s['type'] for s in node['hardware']['sensors']}
 
         if node['policy']:
             self._check_policy(node['policy'])
@@ -44,6 +48,13 @@ class SemanticAnalyzer:
                 has_movement = True
             if stmt['type'] == 'Observe':
                 has_observe = True
+                if declared_sensors:
+                    for sensor in stmt['sensors']:
+                        if sensor not in declared_sensors:
+                            self.error(
+                                f"Sensor '{sensor}' used in observe() but not declared in hardware {{}}.",
+                                stmt['pos'],
+                            )
             self._check_statement(stmt, after_terminator=False)
 
         # Program-level hints and warnings
