@@ -229,8 +229,8 @@ def _client_rpi(motors, sensors):
         motor_lines += [f"GPIO.setup([{en},{in1},{in2}], GPIO.OUT)",
                         f"{v} = GPIO.PWM({en}, 1000); {v}.start(0)"]
         pwm_vars.append(v)
-        apply_lines += [f"    GPIO.output({in1}, action[{i}]>0); GPIO.output({in2}, action[{i}]<0)",
-                        f"    {v}.ChangeDutyCycle(abs(action[{i}])*100)"]
+        apply_lines += [f"        GPIO.output({in1}, action[{i}]>0); GPIO.output({in2}, action[{i}]<0)",
+                        f"        {v}.ChangeDutyCycle(abs(action[{i}])*100)"]
 
     sensor_setup = []
     sensor_reads = []
@@ -239,7 +239,7 @@ def _client_rpi(motors, sensors):
         t, sv = s['type'], f"_rs{s['type']}"
         if t in RPI_SENSOR:
             sensor_setup.append(RPI_SENSOR[t]['setup'])
-            sensor_reads.append("    " + RPI_SENSOR[t]['read'].format(v=sv))
+            sensor_reads.append("        " + RPI_SENSOR[t]['read'].format(v=sv))
             sensor_vars.append(sv)
 
     state_vals = ["0.0"] * len(motors) + sensor_vars
