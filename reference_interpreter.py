@@ -9,6 +9,8 @@ a Trace showing every action/observation/branch decision.
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from compiler import _to_cm
+
 
 @dataclass
 class Scenario:
@@ -143,13 +145,7 @@ class ReferenceInterpreter:
             self.step += 1
         
         elif stmt_type == 'Observe':
-            sensors = stmt.get('sensors', [])
-            readings = {}
-            for sensor in sensors:
-                readings[sensor] = self.scenario.get_reading(sensor, self.step)
-                self.observed_sensors[sensor] = readings[sensor]
-            self.trace.add_observe(self.step, sensors, readings)
-            self.step += 1
+            self._execute_observe(stmt)
         
         elif stmt_type == 'If':
             self._execute_if(stmt)
@@ -163,39 +159,57 @@ class ReferenceInterpreter:
         elif stmt_type == 'Break':
             raise BreakException()
     
+    def _execute_observe(self, node: dict):
+        """Execute an observe block: emit an observe event, then evaluate each
+        sensor branch independently (branches are NOT an if/elif chain — every
+        branch's condition is evaluated regardless of prior branch results,
+        matching compiler.compile_observe)."""
+        sensors = node.get('sensors', [])
+        readings = {}
+        for sensor in sensors:
+            readings[sensor] = self.scenario.get_reading(sensor, self.step)
+            self.observed_sensors[sensor] = readings[sensor]
+        self.trace.add_observe(self.step, sensors, readings)
+        self.step += 1
+
+        for branch in node.get('branches', []):
+            if self.halted:
+                return
+            condition_value = self._eval_condition(branch['condition'])
+            self.trace.add_branch(self.step, condition_value, condition_str=self._condition_str(branch['condition']))
+            self.step += 1
+
+            if condition_value:
+                for stmt in branch['then']:
+                    if self.halted:
+                        return
+                    self._execute_statement(stmt)
+            else:
+                for stmt in branch.get('else', []):
+                    if self.halted:
+                        return
+                    self._execute_statement(stmt)
+
     def _execute_if(self, node: dict):
-        """Execute an if statement with possibly multiple branches."""
+        """Execute a standalone if/then/else statement."""
         condition_value = self._eval_condition(node['condition'])
         self.trace.add_branch(self.step, condition_value, condition_str=self._condition_str(node['condition']))
         self.step += 1
-        
+
         if condition_value:
-            for stmt in node['then_body']:
+            for stmt in node['then']:
                 if self.halted:
                     return
                 self._execute_statement(stmt)
         else:
-            for else_if in node.get('else_if', []):
-                condition_value = self._eval_condition(else_if['condition'])
-                self.trace.add_branch(self.step, condition_value, condition_str=self._condition_str(else_if['condition']))
-                self.step += 1
-                
-                if condition_value:
-                    for stmt in else_if['body']:
-                        if self.halted:
-                            return
-                        self._execute_statement(stmt)
-                    return
-            
-            # else clause
-            for stmt in node.get('else_body', []):
+            for stmt in node.get('else', []):
                 if self.halted:
                     return
                 self._execute_statement(stmt)
     
     def _execute_loop_for(self, node: dict):
         """Execute a loop for N times."""
-        count = node.get('count', 1)
+        count = int(node.get('count', 1))
         body = node.get('body', [])
         
         for iteration in range(count):
@@ -245,59 +259,86 @@ class ReferenceInterpreter:
             iteration += 1
     
     def _eval_condition(self, cond: dict) -> bool:
-        """Evaluate a condition expression recursively."""
+        """Evaluate a condition expression recursively.
+
+        Mirrors ir_trace_executor.IRTraceExecutor's CMP_* handling exactly —
+        including its fallback defaults when a sensor hasn't been observed yet —
+        so the two executors are semantically equivalent."""
         cond_type = cond['type']
-        
-        if cond_type == 'Comparison':
-            sensor = cond['sensor']
-            comparator = cond['comparator']
-            value = cond['value']
-            
-            # Get the sensor reading (from observed_sensors if already read, else from scenario)
-            if sensor in self.observed_sensors:
-                reading = self.observed_sensors[sensor]
-            else:
-                reading = self.scenario.get_reading(sensor, self.step)
-            
-            if isinstance(reading, dict):  # colour sensor
-                if comparator == '==':
-                    return reading.get('name') == value
-                elif comparator == '!=':
-                    return reading.get('name') != value
-                return False
-            
-            # Numeric comparison
-            return {
-                '<': reading < value,
-                '<=': reading <= value,
-                '>': reading > value,
-                '>=': reading >= value,
-                '==': reading == value,
-                '!=': reading != value,
-            }.get(comparator, False)
-        
+
+        if cond_type == 'DistCondition':
+            dist = self.observed_sensors.get('dist', self.scenario.distance_readings[0])
+            value_cm = _to_cm(cond['value'], cond['unit'])
+            return _compare(dist, cond['comparator'], value_cm)
+
+        elif cond_type == 'ColourCondition':
+            colour = self.observed_sensors.get('colour', {'name': 'none', 'nm': 600})
+            colour_name = colour.get('name', 'none') if isinstance(colour, dict) else colour
+            result = (colour_name == cond['colour']) if isinstance(cond['colour'], str) else True
+            return (not result) if cond['negate'] else result
+
+        elif cond_type == 'TouchCondition':
+            return bool(self.observed_sensors.get('touch', False))
+
+        elif cond_type == 'IRCondition':
+            ir_reading = self.observed_sensors.get('IR', False)
+            if cond['mode'] == 'detected':
+                return bool(ir_reading)
+            return _compare(ir_reading, cond['comparator'], cond['value'])
+
+        elif cond_type == 'UVCondition':
+            uv_reading = self.observed_sensors.get('UV', 0.0)
+            if cond['mode'] == 'detected':
+                return uv_reading > 0
+            return _compare(uv_reading, cond['comparator'], cond['index'])
+
+        elif cond_type == 'GyroCondition':
+            gyro_reading = self.observed_sensors.get('gyro', 0.0)
+            return _compare(gyro_reading, cond['comparator'], cond['degrees'])
+
+        elif cond_type == 'SoundCondition':
+            sound_reading = self.observed_sensors.get('sound', 30.0)
+            return _compare(sound_reading, cond['comparator'], cond['db'])
+
         elif cond_type == 'And':
             left = self._eval_condition(cond['left'])
             right = self._eval_condition(cond['right'])
             return left and right
-        
+
         elif cond_type == 'Or':
             left = self._eval_condition(cond['left'])
             right = self._eval_condition(cond['right'])
             return left or right
-        
+
         elif cond_type == 'Not':
             operand = self._eval_condition(cond['operand'])
             return not operand
-        
+
         return False
-    
+
     def _condition_str(self, cond: dict) -> str:
         """Generate a human-readable condition string for tracing."""
         cond_type = cond['type']
-        
-        if cond_type == 'Comparison':
-            return f"{cond['sensor']} {cond['comparator']} {cond['value']}"
+
+        if cond_type == 'DistCondition':
+            return f"dist {cond['comparator']} {cond['value']}{cond['unit']}"
+        elif cond_type == 'ColourCondition':
+            neg = 'not ' if cond['negate'] else ''
+            return f"colour is {neg}{cond['colour']}"
+        elif cond_type == 'TouchCondition':
+            return "touch pressed"
+        elif cond_type == 'IRCondition':
+            if cond['mode'] == 'detected':
+                return "IR detected"
+            return f"IR signal {cond['comparator']} {cond['value']}"
+        elif cond_type == 'UVCondition':
+            if cond['mode'] == 'detected':
+                return "UV detected"
+            return f"UV index {cond['comparator']} {cond['index']}"
+        elif cond_type == 'GyroCondition':
+            return f"gyro tilt {cond['comparator']} {cond['degrees']}deg"
+        elif cond_type == 'SoundCondition':
+            return f"sound {cond['comparator']} {cond['db']}db"
         elif cond_type == 'And':
             return f"({self._condition_str(cond['left'])} and {self._condition_str(cond['right'])})"
         elif cond_type == 'Or':
@@ -314,3 +355,10 @@ class ReferenceInterpreter:
 class BreakException(Exception):
     """Used to implement break statement by exception."""
     pass
+
+
+def _compare(a, op: str, b) -> bool:
+    return {
+        '<': a < b, '<=': a <= b, '>': a > b,
+        '>=': a >= b, '==': a == b, '!=': a != b,
+    }.get(op, False)

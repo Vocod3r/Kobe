@@ -32,9 +32,7 @@ class SemanticAnalyzer:
     # --- Program ---
 
     def _check_program(self, node: dict):
-        has_movement   = False
-        has_observe    = False
-        has_policy     = node['policy'] is not None
+        has_policy = node['policy'] is not None
         declared_sensors: set[str] = set()
 
         if node.get('hardware') and node['hardware'].get('sensors'):
@@ -44,18 +42,13 @@ class SemanticAnalyzer:
             self._check_policy(node['policy'])
 
         for stmt in node['body']:
-            if stmt['type'] in ('Walk', 'Run', 'Turn'):
-                has_movement = True
-            if stmt['type'] == 'Observe':
-                has_observe = True
-                if declared_sensors:
-                    for sensor in stmt['sensors']:
-                        if sensor not in declared_sensors:
-                            self.error(
-                                f"Sensor '{sensor}' used in observe() but not declared in hardware {{}}.",
-                                stmt['pos'],
-                            )
             self._check_statement(stmt, after_terminator=False)
+
+        if declared_sensors:
+            self._check_declared_sensors(node['body'], declared_sensors)
+
+        has_movement = self._contains_movement(node['body'])
+        has_observe = self._contains_observe(node['body'])
 
         # Program-level hints and warnings
         if not has_movement:
@@ -290,6 +283,60 @@ class SemanticAnalyzer:
                     )
 
     # --- Helpers ---
+
+    def _sub_bodies(self, stmt: dict) -> list[list]:
+        """Return every nested statement list a given statement can contain,
+        so movement/observe/sensor checks can walk the whole tree instead of
+        just the top level."""
+        bodies = []
+        if 'body' in stmt:
+            bodies.append(stmt['body'])
+        if 'then' in stmt:
+            bodies.append(stmt['then'])
+        if 'else' in stmt and stmt['else']:
+            bodies.append(stmt['else'])
+        if stmt['type'] == 'Observe':
+            for branch in stmt.get('branches', []):
+                bodies.append(branch['then'])
+                if branch.get('else'):
+                    bodies.append(branch['else'])
+        return bodies
+
+    def _contains_movement(self, body: list) -> bool:
+        """True if `body`, or anything nested inside it (loops, observe
+        branches, if/else), contains a Walk/Run/Turn action."""
+        for stmt in body:
+            if stmt['type'] in ('Walk', 'Run', 'Turn'):
+                return True
+            for sub_body in self._sub_bodies(stmt):
+                if self._contains_movement(sub_body):
+                    return True
+        return False
+
+    def _contains_observe(self, body: list) -> bool:
+        """True if `body`, or anything nested inside it, contains an
+        observe(...) block."""
+        for stmt in body:
+            if stmt['type'] == 'Observe':
+                return True
+            for sub_body in self._sub_bodies(stmt):
+                if self._contains_observe(sub_body):
+                    return True
+        return False
+
+    def _check_declared_sensors(self, body: list, declared_sensors: set[str]):
+        """Recursively verify every observe(...) anywhere in the program only
+        references sensors declared in hardware {}."""
+        for stmt in body:
+            if stmt['type'] == 'Observe':
+                for sensor in stmt['sensors']:
+                    if sensor not in declared_sensors:
+                        self.error(
+                            f"Sensor '{sensor}' used in observe() but not declared in hardware {{}}.",
+                            stmt['pos'],
+                        )
+            for sub_body in self._sub_bodies(stmt):
+                self._check_declared_sensors(sub_body, declared_sensors)
 
     def _block_has_break(self, body: list) -> bool:
         for stmt in body:

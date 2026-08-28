@@ -19,7 +19,8 @@ def main() -> int:
         source = req.get('source', '')
         trial_level = req.get('trialLevel', 2)
         target = req.get('target', 'rl')
-        result = run(source, trial_level=trial_level, target=target)
+        validate = req.get('validate', True)
+        result = run(source, trial_level=trial_level, target=target, validate=validate)
         sys.stdout.write(json.dumps(result))
         sys.stdout.flush()
         return 0

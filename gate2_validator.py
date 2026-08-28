@@ -14,17 +14,25 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np
-from reference_interpreter import ReferenceInterpreter, Scenario
-from ir_trace_executor import IRTraceExecutor
-from backend import IRInterpreter, KobeEnv
+from reference_interpreter import Scenario
+from backend import KobeEnv
 from environment import IREnvironmentGenerator
 from inspector import IRInspector
+from equivalence import check_equivalence
 
 
-def validate_gate_2(ir: list[dict], priorities: dict, num_steps: int = 20) -> dict:
+def validate_gate_2(ir: list[dict], priorities: dict, ast: dict | None = None,
+                     num_steps: int = 20) -> dict:
     """
     Validate Gate 2: Compiler produces semantically equivalent environment.
-    
+
+    If `ast` is provided, this runs the actual proof that Gate 2 is named
+    for: the reference (AST-walking) interpreter and the IR trace executor
+    are run against the same deterministic sensor scenario and their
+    observable traces (actions/observes/branches/breaks/halts) must match
+    exactly. Without an `ast`, that check is skipped and only IR-level
+    sanity checks run.
+
     Returns comprehensive validation report.
     """
     results = {
@@ -32,7 +40,7 @@ def validate_gate_2(ir: list[dict], priorities: dict, num_steps: int = 20) -> di
         'checks': {},
         'errors': [],
     }
-    
+
     # Create deterministic scenario for comparison
     scenario = Scenario(
         distance_readings=[100.0, 95.0, 90.0, 85.0, 80.0, 75.0, 70.0, 65.0, 60.0, 55.0] * 3,
@@ -48,18 +56,36 @@ def validate_gate_2(ir: list[dict], priorities: dict, num_steps: int = 20) -> di
         sound_readings=[30.0, 60.0, 90.0] * 7,
         distance_change_per_step=-2.0,  # Decrease distance over time
     )
-    
+
+    # ── Check 0: Reference-interpreter vs IR-trace-executor equivalence ──
+    # This is the actual semantic-equivalence proof Gate 2 exists for.
+    if ast is not None:
+        try:
+            equiv = check_equivalence(ast, ir, scenario=scenario)
+            results['checks']['trace_equivalence'] = equiv['passed']
+            results['checks']['trace_equivalence_detail'] = equiv['message']
+            if not equiv['passed']:
+                results['errors'].append(f"Trace equivalence failed: {equiv['message']}")
+        except Exception as e:
+            results['checks']['trace_equivalence'] = False
+            results['errors'].append(f'Trace equivalence check crashed: {e}')
+
     # ── Check 1: Observation space consistency ──
+    # Only required if the program actually contains a SENSE op (i.e. uses
+    # observe(...)); a program with no observe blocks legitimately has an
+    # empty observation spec.
     try:
         gen = IREnvironmentGenerator(ir)
         obs_spec = gen.get_observation_spec()
-        
-        # Should have 'dist' if program observes it
-        has_observations = len(obs_spec) > 0
-        results['checks']['observations_defined'] = has_observations
-        
-        if not has_observations:
-            results['errors'].append('No observations defined in IR')
+        program_observes = any(instr.get('op') == 'SENSE' for instr in ir)
+
+        if program_observes:
+            has_observations = len(obs_spec) > 0
+            results['checks']['observations_defined'] = has_observations
+            if not has_observations:
+                results['errors'].append('Program uses observe(...) but no observations defined in IR')
+        else:
+            results['checks']['observations_defined'] = True
     except Exception as e:
         results['checks']['observations_defined'] = False
         results['errors'].append(f'Observation check failed: {e}')
@@ -87,6 +113,7 @@ def validate_gate_2(ir: list[dict], priorities: dict, num_steps: int = 20) -> di
     
     # ── Check 4: IR trace executor correctness ──
     try:
+        from ir_trace_executor import IRTraceExecutor
         ir_executor = IRTraceExecutor(ir, scenario)
         ir_trace = ir_executor.execute()
         ir_events = ir_trace.observable_events()
@@ -171,9 +198,12 @@ if __name__ == '__main__':
     from priorities import DEFAULTS
     
     code = """
+    hardware { sensors: [dist@1] }
     policy { safety = 0.8; }
+    observe(dist) {
+        dist < 20 cm then { stop; }
+    }
     walk forward;
-    stop;
     """
     
     try:
@@ -181,7 +211,7 @@ if __name__ == '__main__':
         ast = Parser(tokens).parse()
         ir = compile(ast, DEFAULTS)
         
-        report = validate_gate_2(ir, DEFAULTS)
+        report = validate_gate_2(ir, DEFAULTS, ast=ast)
         print_validation_report(report, verbose=True)
         
         sys.exit(0 if report['passed'] else 1)

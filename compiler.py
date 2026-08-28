@@ -9,6 +9,7 @@ class Compiler:
     def __init__(self, priorities: dict):
         self.ir          = []
         self.priorities  = priorities
+        self._break_stack: list[list[int]] = []
 
     def emit(self, instruction: dict):
         self.ir.append(instruction)
@@ -211,9 +212,6 @@ class Compiler:
         elif t == 'SoundCondition':
             self.emit({'op': 'CMP_SOUND', 'comparator': cond['comparator'],
                        'db': cond['db']})
-
-    # initialise break stack
-    _break_stack: list[list[int]] = []
 
 
 # --- Helpers ---
