@@ -90,6 +90,12 @@ button.secondary {
 .editor-wrap {
   flex: 1;
   min-height: 0;
+  position: relative;
+}
+
+.blockly-host {
+  position: absolute;
+  inset: 0;
 }
 
 .inspector {

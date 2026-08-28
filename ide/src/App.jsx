@@ -1,38 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Editor from '@monaco-editor/react';
-
-const DEFAULT_SOURCE = `algorithm SAC
-
-hardware {
-    target: EV3
-    motors: [A, B]
-    sensors: [dist@1, colour@2]
-}
-
-policy {
-    curiosity = 0.3;
-    safety = 0.6;
-    comfort = 0.5;
-    efficiency = 0.4;
-}
-
-walk forward slowly;
-
-observe(dist, colour) {
-    dist < 20 cm then { stop; }
-    colour is red then { stop; }
-    dist >= 20 cm then { walk forward normally; }
-}
-
-turn left;
-walk forward;
-`;
+import BlockEditor from './BlockEditor';
 
 const SLIDER_KEYS = ['curiosity', 'safety', 'comfort', 'efficiency'];
 const TAB_KEYS = ['diagnostics', 'ir', 'generated', 'sliders'];
 
 function App() {
-  const [source, setSource] = useState(DEFAULT_SOURCE);
+  const [source, setSource] = useState('');
   const [compileResult, setCompileResult] = useState(null);
   const [activeTab, setActiveTab] = useState('diagnostics');
   const [generatedFile, setGeneratedFile] = useState('train');
@@ -127,19 +100,7 @@ function App() {
         <section className="editor-pane">
           <div className="pane-header">Kobe Program</div>
           <div className="editor-wrap">
-            <Editor
-              height="100%"
-              defaultLanguage="plaintext"
-              theme="vs-dark"
-              value={source}
-              onChange={(v) => setSource(v ?? '')}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                wordWrap: 'on',
-                scrollBeyondLastLine: false,
-              }}
-            />
+            <BlockEditor onSourceChange={setSource} />
           </div>
         </section>
 
