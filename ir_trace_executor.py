@@ -13,12 +13,14 @@ from reference_interpreter import Scenario, Trace, TraceEvent
 class IRTraceExecutor:
     """Executes compiled IR against a Scenario, producing a trace."""
     
-    def __init__(self, ir: list[dict], scenario: Scenario):
+    def __init__(self, ir: list[dict], scenario: Scenario, max_steps: int | None = None):
         self.ir = ir
         self.scenario = scenario
         self.trace = Trace()
         self.step = 0
         self.pc = 0
+        self.max_steps = max_steps
+        self.hit_cap = False
         self.loop_stack = []  # Stack of (pc_to_return_to, iteration_count)
         self.condition_stack = []
         self.observed_sensors = {}
@@ -27,6 +29,9 @@ class IRTraceExecutor:
     def execute(self) -> Trace:
         """Execute the IR and return the trace."""
         while self.pc < len(self.ir) and not self.halted:
+            if self.max_steps is not None and self.step > self.max_steps:
+                self.hit_cap = True
+                break
             self._step_instruction()
         
         if not self.halted:
@@ -72,7 +77,7 @@ class IRTraceExecutor:
             self.pc += 1
         
         elif op == 'WAIT':
-            duration = instr.get('duration', 1)
+            duration = instr.get('durationMs', instr.get('duration', 1))
             self.trace.add_action(self.step, 'wait', duration=duration)
             self.step += 1
             self.pc += 1
@@ -174,6 +179,22 @@ class IRTraceExecutor:
             
             self.pc = (self.pc + 1) if condition_result else instr['target']
         
+        elif op == 'JUMP_IF_TRUE':
+            condition_result = self.condition_stack.pop() if self.condition_stack else False
+
+            # Emit branch event for loop checks (loop_until exit check)
+            if instr.get('isLoopCheck', True):
+                self.trace.add_branch(self.step, condition_result,
+                                     condition_str=instr.get('condition_str', '?'),
+                                     isLoopCheck=True)
+            else:
+                self.trace.add_branch(self.step, condition_result,
+                                     condition_str=instr.get('condition_str', '?'))
+            self.step += 1
+
+            # Jump to exit when condition is True (loop_until exit semantics)
+            self.pc = instr['target'] if condition_result else (self.pc + 1)
+
         elif op == 'JUMP':
             self.pc = instr['target']
         
@@ -194,9 +215,8 @@ class IRTraceExecutor:
                 self.pc += 1
         
         elif op == 'BREAK':
-            # Break is marked with isBreak=True on a JUMP instruction
-            self.trace.add_break(self.step)
-            self.step += 1
+            if self.loop_stack:
+                self.loop_stack.pop()
             self.pc = instr['target']
         
         else:

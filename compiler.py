@@ -130,7 +130,7 @@ class Compiler:
         self.emit({'op': 'LOOP_START', 'count': int(node['count'])})
 
         # Track break sites to backpatch
-        break_sites = self._compile_body_with_breaks(node['body'])
+        break_sites = self._compile_body_with_breaks(node['body'], is_for_loop=True)
 
         end_idx = self.emit({'op': 'LOOP_END', 'startTarget': loop_start})
 
@@ -143,9 +143,11 @@ class Compiler:
         cond_start = self.current_index()
 
         self.compile_condition(node['condition'])
-        exit_jump = self.emit({'op': 'JUMP_IF_FALSE', 'target': -1})
+        # loop until means: exit when condition is TRUE, run body when FALSE.
+        # JUMP_IF_TRUE jumps to exit_target when the condition result is True.
+        exit_jump = self.emit({'op': 'JUMP_IF_TRUE', 'target': -1})
 
-        break_sites = self._compile_body_with_breaks(node['body'])
+        break_sites = self._compile_body_with_breaks(node['body'], is_for_loop=False)
 
         self.emit({'op': 'JUMP', 'target': cond_start})
 
@@ -154,17 +156,20 @@ class Compiler:
         for site in break_sites:
             self.patch(site, 'target', exit_target)
 
-    def _compile_body_with_breaks(self, body: list) -> list[int]:
-        """Compile a loop body. Returns list of JUMP indices emitted by break statements."""
-        self._break_stack.append([])
+    def _compile_body_with_breaks(self, body: list, is_for_loop: bool = True) -> list[int]:
+        """Compile a loop body. Returns list of JUMP/BREAK indices emitted by break statements."""
+        self._break_stack.append(([], is_for_loop))
         for stmt in body:
             self.compile_statement(stmt)
-        return self._break_stack.pop()
+        sites, _ = self._break_stack.pop()
+        return sites
 
     def compile_break(self, node: dict):
-        idx = self.emit({'op': 'JUMP', 'target': -1})   # target patched later
+        is_for = self._break_stack[-1][1] if self._break_stack else True
+        op = 'BREAK' if is_for else 'JUMP'
+        idx = self.emit({'op': op, 'target': -1})   # target patched later
         if self._break_stack:
-            self._break_stack[-1].append(idx)
+            self._break_stack[-1][0].append(idx)
 
     # --- Conditions ---
 

@@ -30,26 +30,45 @@ def default_scenario() -> Scenario:
     )
 
 
-def compare_traces(ref_events: list[TraceEvent], ir_events: list[TraceEvent]) -> tuple[bool, str]:
+def compare_traces(
+    ref_events: list[TraceEvent],
+    ir_events: list[TraceEvent],
+    ref_hit_cap: bool = False,
+    ir_hit_cap: bool = False,
+) -> tuple[bool, str, bool]:
     """Compare two observable-event traces for equivalence.
 
     Observable events: action, observe, branch, break, halt (loop_iter is
     informational only and already excluded by Trace.observable_events()).
-    """
-    if len(ref_events) != len(ir_events):
-        return False, f"Event count mismatch: ref={len(ref_events)}, ir={len(ir_events)}"
 
-    for i, (ref_evt, ir_evt) in enumerate(zip(ref_events, ir_events)):
+    Returns:
+        (passed, message, is_capped_equivalent)
+    """
+    both_capped = ref_hit_cap and ir_hit_cap
+
+    if not both_capped:
+        if len(ref_events) != len(ir_events):
+            return False, f"Event count mismatch: ref={len(ref_events)}, ir={len(ir_events)}", False
+        events_to_compare = len(ref_events)
+    else:
+        events_to_compare = min(len(ref_events), len(ir_events))
+
+    for i in range(events_to_compare):
+        ref_evt = ref_events[i]
+        ir_evt = ir_events[i]
+
         if ref_evt.kind != ir_evt.kind:
-            return False, f"Event {i} kind mismatch: ref={ref_evt.kind}, ir={ir_evt.kind}"
+            return False, f"Event {i} kind mismatch: ref={ref_evt.kind}, ir={ir_evt.kind}", False
 
         if ref_evt.kind == 'action':
             if ref_evt.details.get('action') != ir_evt.details.get('action'):
-                return False, f"Event {i} action mismatch: ref={ref_evt.details}, ir={ir_evt.details}"
+                return False, f"Event {i} action mismatch: ref={ref_evt.details.get('action')}, ir={ir_evt.details.get('action')}", False
+            if ref_evt.details.get('direction') != ir_evt.details.get('direction'):
+                return False, f"Event {i} action direction mismatch: ref={ref_evt.details.get('direction')}, ir={ir_evt.details.get('direction')}", False
 
         elif ref_evt.kind == 'observe':
             if ref_evt.details.get('sensors') != ir_evt.details.get('sensors'):
-                return False, f"Event {i} observe sensors mismatch"
+                return False, f"Event {i} observe sensors mismatch", False
             ref_readings = ref_evt.details.get('readings', {})
             ir_readings = ir_evt.details.get('readings', {})
             for sensor in ref_readings:
@@ -57,44 +76,69 @@ def compare_traces(ref_events: list[TraceEvent], ir_events: list[TraceEvent]) ->
                     return False, (
                         f"Event {i} reading mismatch for {sensor}: "
                         f"ref={ref_readings.get(sensor)}, ir={ir_readings.get(sensor)}"
-                    )
+                    ), False
 
         elif ref_evt.kind == 'branch':
             if ref_evt.details.get('result') != ir_evt.details.get('result'):
                 return False, (
                     f"Event {i} branch result mismatch: "
                     f"ref={ref_evt.details.get('result')}, ir={ir_evt.details.get('result')}"
-                )
+                ), False
 
-    return True, "All events match"
+    if both_capped:
+        return True, f"Capped-equivalent (shared prefix of {events_to_compare} events match up to cap)", True
+
+    return True, "All events match", False
 
 
-def check_equivalence(ast: dict, ir: list[dict], scenario: Scenario | None = None) -> dict:
+def check_equivalence(ast: dict, ir: list[dict], scenario: Scenario | None = None, max_steps: int | None = None) -> dict:
     """Run the reference interpreter (AST) and the IR trace executor (compiled
     IR) against the same scenario and report whether their observable traces
     match. This is the actual proof that compiler.py's flattened IR preserves
     source-level semantics — the core claim of Gate 2.
+
+    max_steps: optional step cap for both executors (only used in fuzzing/testing
+    to prevent infinite loops in randomly generated programs). Leave as None for
+    production Gate 2 checks so real program behavior is never silently truncated.
     """
     scenario = scenario or default_scenario()
-    out = {'passed': False, 'message': '', 'ref_event_count': None, 'ir_event_count': None}
+    out = {
+        'passed': False,
+        'capped_equivalent': False,
+        'message': '',
+        'ref_event_count': None,
+        'ir_event_count': None,
+        'ref_hit_cap': False,
+        'ir_hit_cap': False,
+    }
 
     try:
-        ref_trace = ReferenceInterpreter(ast, scenario).execute()
+        ref_interp = ReferenceInterpreter(ast, scenario, max_steps=max_steps)
+        ref_trace = ref_interp.execute()
         ref_events = ref_trace.observable_events()
+        ref_hit_cap = getattr(ref_interp, 'hit_cap', False) or (max_steps is not None and ref_interp.step > max_steps)
     except Exception as e:
         out['message'] = f'Reference interpreter error: {e}'
         return out
 
     try:
-        ir_trace = IRTraceExecutor(ir, scenario).execute()
+        ir_exec = IRTraceExecutor(ir, scenario, max_steps=max_steps)
+        ir_trace = ir_exec.execute()
         ir_events = ir_trace.observable_events()
+        ir_hit_cap = getattr(ir_exec, 'hit_cap', False) or (max_steps is not None and ir_exec.step > max_steps)
     except Exception as e:
         out['message'] = f'IR executor error: {e}'
         return out
 
     out['ref_event_count'] = len(ref_events)
     out['ir_event_count'] = len(ir_events)
-    passed, message = compare_traces(ref_events, ir_events)
+    out['ref_hit_cap'] = ref_hit_cap
+    out['ir_hit_cap'] = ir_hit_cap
+
+    passed, message, capped_equivalent = compare_traces(
+        ref_events, ir_events, ref_hit_cap=ref_hit_cap, ir_hit_cap=ir_hit_cap
+    )
     out['passed'] = passed
+    out['capped_equivalent'] = capped_equivalent
     out['message'] = message
     return out

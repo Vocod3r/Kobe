@@ -83,11 +83,13 @@ class Trace:
 class ReferenceInterpreter:
     """Interprets Kobe AST directly, producing deterministic traces."""
     
-    def __init__(self, ast: dict, scenario: Scenario):
+    def __init__(self, ast: dict, scenario: Scenario, max_steps: int | None = None):
         self.ast = ast
         self.scenario = scenario
         self.trace = Trace()
         self.step = 0
+        self.max_steps = max_steps
+        self.hit_cap = False
         self.observed_sensors = {}
         self.halted = False
         self.break_exception = None
@@ -96,7 +98,7 @@ class ReferenceInterpreter:
         """Execute the entire program and return the trace."""
         try:
             for stmt in self.ast['body']:
-                if self.halted:
+                if self.halted or self.hit_cap:
                     break
                 self._execute_statement(stmt)
         except BreakException:
@@ -111,6 +113,9 @@ class ReferenceInterpreter:
     def _execute_statement(self, stmt: dict):
         """Execute a single statement."""
         if self.halted:
+            return
+        if self.max_steps is not None and self.step > self.max_steps:
+            self.hit_cap = True
             return
         
         stmt_type = stmt['type']
@@ -173,7 +178,8 @@ class ReferenceInterpreter:
         self.step += 1
 
         for branch in node.get('branches', []):
-            if self.halted:
+            if self.halted or (self.max_steps is not None and self.step > self.max_steps):
+                self.hit_cap = True
                 return
             condition_value = self._eval_condition(branch['condition'])
             self.trace.add_branch(self.step, condition_value, condition_str=self._condition_str(branch['condition']))
@@ -215,11 +221,14 @@ class ReferenceInterpreter:
         for iteration in range(count):
             if self.halted:
                 break
+            if self.max_steps is not None and self.step > self.max_steps:
+                self.hit_cap = True
+                break
             self.trace.add_loop_iter(self.step, iteration=iteration, count=count)
             
             try:
                 for stmt in body:
-                    if self.halted:
+                    if self.halted or self.hit_cap:
                         break
                     self._execute_statement(stmt)
             except BreakException:
@@ -233,6 +242,9 @@ class ReferenceInterpreter:
         
         while True:
             if self.halted:
+                break
+            if self.max_steps is not None and self.step > self.max_steps:
+                self.hit_cap = True
                 break
             
             # Evaluate the condition (note: loop_until means "until condition is true")
