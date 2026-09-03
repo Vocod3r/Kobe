@@ -1,6 +1,6 @@
-# codegen.py — Kobe Code Generator (TorchRL native)
+# codegen.py — Kobe Code Generator (TorchRL config generation)
 #
-# Slider → TorchRL hyperparameter mapping is ALGORITHM-SPECIFIC.
+# Slider → hyperparameter mapping is ALGORITHM-SPECIFIC.
 # See SLIDER_MAP below for the full table.
 
 from __future__ import annotations

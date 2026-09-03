@@ -261,13 +261,20 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, obs_dim: int, hidden: int = 128):
+    def __init__(self, obs_dim: int, hidden: int = 128, dropout_p: float = 0.0):
         super().__init__()
-        self.net = nn.Sequential(
+        layers = [
             nn.Linear(obs_dim + 1, hidden), nn.ReLU(),
+        ]
+        if dropout_p > 0.0:
+            layers.append(nn.Dropout(p=dropout_p))
+        layers.extend([
             nn.Linear(hidden, hidden), nn.ReLU(),
-            nn.Linear(hidden, 1),
-        )
+        ])
+        if dropout_p > 0.0:
+            layers.append(nn.Dropout(p=dropout_p))
+        layers.append(nn.Linear(hidden, 1))
+        self.net = nn.Sequential(*layers)
 
     def forward(self, obs: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
         return self.net(torch.cat([obs, action], dim=-1))
@@ -335,22 +342,45 @@ def train_policy(
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     actor = Actor(obs_dim).to(device)
-    critic = Critic(obs_dim).to(device)
-    target_critic = Critic(obs_dim).to(device)
-    target_critic.load_state_dict(critic.state_dict())
-
-    actor_opt = torch.optim.Adam(actor.parameters(), lr=3e-4)
-    critic_opt = torch.optim.Adam(critic.parameters(), lr=3e-4)
 
     curiosity = priorities.get('curiosity', 0.3)
     comfort = priorities.get('comfort', 0.5)
 
     alpha = smap['curiosity']['formula'](curiosity)
     comfort_result = smap['comfort']['formula'](comfort)
+    dropout_p = 0.0
     if isinstance(comfort_result, tuple):
-        soft_eps, noise_clip = comfort_result
+        soft_eps, second_val = comfort_result
+        if alg == 'TD3':
+            noise_clip = second_val
+        elif alg == 'DroQ':
+            noise_clip = 0.2
+            dropout_p = float(second_val)
+        else:
+            noise_clip = 0.2
     else:
         soft_eps, noise_clip = comfort_result, 0.2
+
+    if alg == 'DroQ':
+        critic = Critic(obs_dim, dropout_p=dropout_p).to(device)
+        target_critic = Critic(obs_dim, dropout_p=dropout_p).to(device)
+        target_critic.load_state_dict(critic.state_dict())
+        critic_opt = torch.optim.Adam(critic.parameters(), lr=3e-4)
+    elif alg == 'TD3':
+        critic = Critic(obs_dim).to(device)
+        target_critic = Critic(obs_dim).to(device)
+        target_critic.load_state_dict(critic.state_dict())
+        critic2 = Critic(obs_dim).to(device)
+        target_critic2 = Critic(obs_dim).to(device)
+        target_critic2.load_state_dict(critic2.state_dict())
+        critic_opt = torch.optim.Adam(list(critic.parameters()) + list(critic2.parameters()), lr=3e-4)
+    else:
+        critic = Critic(obs_dim).to(device)
+        target_critic = Critic(obs_dim).to(device)
+        target_critic.load_state_dict(critic.state_dict())
+        critic_opt = torch.optim.Adam(critic.parameters(), lr=3e-4)
+
+    actor_opt = torch.optim.Adam(actor.parameters(), lr=3e-4)
 
     gamma = 0.99
     batch_size = 64
@@ -373,37 +403,52 @@ def train_policy(
         obs = next_obs if not done else env.reset()[0]
 
         if len(replay) >= batch_size:
-            batch = random.sample(replay, batch_size)
-            b_obs = torch.tensor(np.array([b[0] for b in batch]), dtype=torch.float32, device=device)
-            b_act = torch.tensor(np.array([b[1] for b in batch]), dtype=torch.float32, device=device)
-            b_rew = torch.tensor([b[2] for b in batch], dtype=torch.float32, device=device).unsqueeze(1)
-            b_nobs = torch.tensor(np.array([b[3] for b in batch]), dtype=torch.float32, device=device)
-            b_done = torch.tensor([b[4] for b in batch], dtype=torch.float32, device=device).unsqueeze(1)
+            utd = 4 if alg == 'DroQ' else 1
+            for _ in range(utd):
+                batch = random.sample(replay, batch_size)
+                b_obs = torch.tensor(np.array([b[0] for b in batch]), dtype=torch.float32, device=device)
+                b_act = torch.tensor(np.array([b[1] for b in batch]), dtype=torch.float32, device=device)
+                b_rew = torch.tensor([b[2] for b in batch], dtype=torch.float32, device=device).unsqueeze(1)
+                b_nobs = torch.tensor(np.array([b[3] for b in batch]), dtype=torch.float32, device=device)
+                b_done = torch.tensor([b[4] for b in batch], dtype=torch.float32, device=device).unsqueeze(1)
 
-            with torch.no_grad():
-                next_action = actor(b_nobs)
+                with torch.no_grad():
+                    next_action = actor(b_nobs)
+                    if alg == 'TD3':
+                        noise = torch.clamp(torch.randn_like(next_action) * noise_clip, -noise_clip, noise_clip)
+                        next_action = torch.clamp(next_action + noise, 0.0, 1.0)
+                        target_q1 = target_critic(b_nobs, next_action)
+                        target_q2 = target_critic2(b_nobs, next_action)
+                        target_next_q = torch.min(target_q1, target_q2)
+                    else:
+                        target_next_q = target_critic(b_nobs, next_action)
+                    target_q = b_rew + gamma * (1 - b_done) * target_next_q
+
+                q = critic(b_obs, b_act)
                 if alg == 'TD3':
-                    noise = torch.clamp(torch.randn_like(next_action) * noise_clip, -noise_clip, noise_clip)
-                    next_action = torch.clamp(next_action + noise, 0.0, 1.0)
-                target_q = b_rew + gamma * (1 - b_done) * target_critic(b_nobs, next_action)
+                    q2 = critic2(b_obs, b_act)
+                    critic_loss = F.mse_loss(q, target_q) + F.mse_loss(q2, target_q)
+                else:
+                    critic_loss = F.mse_loss(q, target_q)
 
-            q = critic(b_obs, b_act)
-            critic_loss = F.mse_loss(q, target_q)
-            critic_opt.zero_grad()
-            critic_loss.backward()
-            critic_opt.step()
+                critic_opt.zero_grad()
+                critic_loss.backward()
+                critic_opt.step()
 
-            if alg != 'TD3' or step % 2 == 0:
-                pred_action = actor(b_obs)
-                actor_loss = -critic(b_obs, pred_action).mean()
-                if alg in ('SAC', 'DroQ'):
-                    actor_loss = actor_loss - alpha * 0.01 * torch.mean(pred_action * (1 - pred_action) + 1e-6)
-                actor_opt.zero_grad()
-                actor_loss.backward()
-                actor_opt.step()
+                if alg != 'TD3' or step % 2 == 0:
+                    pred_action = actor(b_obs)
+                    actor_loss = -critic(b_obs, pred_action).mean()
+                    if alg in ('SAC', 'DroQ'):
+                        actor_loss = actor_loss - alpha * 0.01 * torch.mean(pred_action * (1 - pred_action) + 1e-6)
+                    actor_opt.zero_grad()
+                    actor_loss.backward()
+                    actor_opt.step()
 
-            for tp, sp in zip(target_critic.parameters(), critic.parameters()):
-                tp.data.copy_(soft_eps * tp.data + (1 - soft_eps) * sp.data)
+                for tp, sp in zip(target_critic.parameters(), critic.parameters()):
+                    tp.data.copy_(soft_eps * tp.data + (1 - soft_eps) * sp.data)
+                if alg == 'TD3':
+                    for tp, sp in zip(target_critic2.parameters(), critic2.parameters()):
+                        tp.data.copy_(soft_eps * tp.data + (1 - soft_eps) * sp.data)
 
         if progress_callback and step % log_interval == 0:
             progress_callback({

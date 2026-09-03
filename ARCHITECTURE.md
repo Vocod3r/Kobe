@@ -27,7 +27,7 @@ Complete specification of Kobe system design and timeline to publication.
 ┌─────────────────────────────────────────────────────────────┐
 │  Generation Layer (CURRENT: Aug 28-Sep 5) ✓ IN PROGRESS     │
 │  - environment.py: IR → Gymnasium                           │
-│  - trainer.py: IR → TorchRL config                          │
+│  - trainer.py: IR → TorchRL config (export)                │
 │  - inspector.py: IR → human explanations                    │
 │  - gate2_validator.py: semantic equivalence proof           │
 └─────────────────────────────────────────────────────────────┘
@@ -77,7 +77,7 @@ Complete specification of Kobe system design and timeline to publication.
 - ✓ Handwritten baseline (control)
 - ✓ Golden test suite (10 programs)
 - ✓ Environment generator (IR → Gymnasium)
-- ✓ Trainer generator (IR → TorchRL)
+- ✓ Trainer generator (IR → TorchRL; implemented for export, live training uses backend.py)
 - ✓ Inspector (IR → explanations)
 - ✓ Study tasks (T1, T2, T3, Transfer)
 - ✓ Gate 2 validator (compiler proof)
@@ -274,7 +274,7 @@ Kobe/
 ├── handwritten_baseline.py           ✓ Control policy
 │
 ├── environment.py                    ✓ NEW: IR → Gymnasium
-├── trainer.py                        ✓ NEW: IR → TorchRL
+├── trainer.py                        ✓ NEW: IR → TorchRL (implemented for export, live training uses backend.py)
 ├── inspector.py                      ✓ NEW: IR → explanations
 ├── study_tasks.py                    ✓ NEW: T1, T2, T3, Transfer
 ├── gate2_validator.py                ✓ NEW: Compiler proof
@@ -299,7 +299,7 @@ Kobe/
 │
 ├── backends/                         ⚙ TODO: Platform-specific
 │   ├── simulator/                    ✓ Gymnasium env (done)
-│   ├── torchrl/                      ✓ Training config (done)
+│   ├── torchrl/                      ✓ Training config (done; live training uses backend.py)
 │   ├── lego/                         ⚙ TODO: Hardware driver
 │   │   ├── ev3_motor.py
 │   │   ├── ev3_sensors.py

@@ -1,0 +1,5 @@
+# Algorithmic Limitations & Future Work
+
+### Deterministic Policy Architecture and Exploration (SAC vs. DroQ)
+
+In Kobe's current simulation training backend (`backend.py`), both SAC and DroQ share a deterministic actor architecture with an empirical variance-based entropy penalty rather than a true stochastic Gaussian policy head. Consequently, while critic dropout and an elevated update-to-data ratio (UTD = 4) cause DroQ to diverge from SAC on individual seed trajectories, they fail to produce a statistically separable behavioral cluster across multiple seeds without an active exploratory mechanism. In aggregate across 6 seeds, DroQ's performance distribution (mean speed: 1138.9) remains essentially indistinguishable from SAC's (mean speed: 1134.3) relative to large seed-to-seed variance ($\sigma \approx 210\text{--}300$). This empirical finding demonstrates that value-network regularization alone is insufficient to change policy behavior without state-action space exploration, strongly motivating the integration of a full reparameterized stochastic policy head (or dedicated action noise) as priority future work.

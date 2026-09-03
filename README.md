@@ -35,9 +35,9 @@ npm run dev
 ## Usage
 
 1. Write a Kobe program in the editor pane.
-2. Diagnostics, IR, and generated TorchRL code appear in the inspector.
+2. Diagnostics, IR, and generated TorchRL training scripts appear in the inspector.
 3. Adjust policy sliders — descriptions update per algorithm.
-4. Click **Train Robot** to run live simulator training.
+4. Click **Train Robot** to run live simulator training (powered by Kobe's built-in PyTorch actor-critic backend).
 
 ## Pipeline test (CLI)
 

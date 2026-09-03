@@ -11,7 +11,7 @@ sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[1]
 
 from backend import train_policy
 
-# TorchRL and PyTorch log to stderr so stdout stays clean JSON lines.
+# PyTorch logs to stderr so stdout stays clean JSON lines.
 logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
 
 

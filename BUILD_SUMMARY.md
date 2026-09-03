@@ -18,7 +18,7 @@ The IR-to-Gymnasium compiler that transforms abstract robot specifications into 
 **Validation:** Generated environments must produce identical traces to reference interpreter on deterministic test scenarios.
 
 ### 2. Trainer Generator (`trainer.py`)
-The IR-to-TorchRL compiler for training configurations and hyperparameters.
+The IR-to-TorchRL compiler for training configurations and hyperparameters (implemented but not yet integrated into the live training loop; the live training path in `train_ipc.py` -> `backend.py` uses a custom PyTorch implementation, not TorchRL).
 
 **Key Classes:**
 - `TrainerGenerator`: Extracts training requirements from IR
@@ -26,7 +26,7 @@ The IR-to-TorchRL compiler for training configurations and hyperparameters.
 **What it does:**
 - Generates TorchRL-compatible training scripts
 - Tunes hyperparameters based on policy priorities (safety, efficiency, comfort, curiosity)
-- Supports multiple algorithms (SAC primary, TD3/DroQ secondary)
+- Generates configs for multiple algorithm objectives (simplified variants inspired by SAC/TD3/DroQ with deterministic policies and no learned entropy, with TD3 adding twin critics, target smoothing, and delayed updates, and DroQ adding critic dropout and UTD=4; not full literature implementations)
 - Creates executable Python training code
 
 **Output:** Complete training script ready to run.
@@ -94,9 +94,9 @@ Source Code (Kobe DSL)
    │ • Gate 2 Validator (Correctness Proof)     │
    └────────────────────────────────────────────┘
         ↓
-    Gymnasium Environment + TorchRL Config
+    Gymnasium Environment + Generated Training Config
         ↓
-    Policy Training (SAC)
+    Policy Training (backend.py custom PyTorch loop; TorchRL script generation available)
         ↓
     Trained Policy → Evaluation
 ```
@@ -109,9 +109,9 @@ Source Code (Kobe DSL)
 3. Semantic analyzer validates
 4. Compiler generates IR (canonical)
 5. **[NEW]** Environment generator creates Gymnasium env
-6. **[NEW]** Trainer generator creates training script
+6. **[NEW]** Trainer generator creates training script (TorchRL config generation)
 7. **[NEW]** Inspector explains what was generated
-8. Policy trains in TorchRL
+8. Policy trains in simulator (via backend.py; standalone TorchRL script generated for export)
 9. Trained policy evaluated on study tasks
 
 **Validation:**
@@ -162,7 +162,7 @@ python -c "from study_tasks import print_all_tasks; print_all_tasks()"
 ## What's Ready for Users
 
 1. **Environment Generation**: IR compiles to valid Gymnasium environments
-2. **Training Configuration**: TorchRL configs generated from IR
+2. **Training Configuration**: TorchRL configs generated from IR (implemented for export; live training runs in backend.py with custom PyTorch)
 3. **Transparency System**: Inspector shows exactly what was generated
 4. **Study Tasks**: Three matched programming tasks with solutions
 5. **Validator**: Proof that compiler is semantically correct

@@ -45,8 +45,8 @@ Kobe's testing strategy proves correctness at multiple gates:
 - Basis for environment-based testing and training
 
 ### 6. Trainer Generator (`trainer.py`) [NEW]
-- Generates TorchRL training configurations from IR
-- Selects algorithm (SAC default) and hyperparameters
+- Generates TorchRL training configurations from IR (implemented for export; not yet integrated into live training loop)
+- Selects algorithm (simplified variants inspired by SAC, TD3, DroQ) and hyperparameters
 - Creates executable training scripts
 - Ensures training respects safety constraints and weighted objectives
 
@@ -277,10 +277,10 @@ for i, (ref_evt, ir_evt) in enumerate(zip(ref_trace.observable_events(), ir_trac
 
 ## Integration with Trained Policies
 
-To include trained SAC/TD3/DroQ policies in baseline comparison:
+To include policies trained with Kobe's simplified SAC/TD3/DroQ actor-critic backend in baseline comparison:
 
 ```python
-# After training (backend.py)
+# After training (backend.py custom PyTorch loop)
 # The compare_baselines.py already supports this:
 python compare_baselines.py --trained --actor-path checkpoints/my_sac_actor.pt
 
@@ -327,11 +327,11 @@ Compiles IR to Gymnasium environments:
 - Ground truth: matches reference interpreter behavior on scenarios
 
 ### Training Generation (`trainer.py`)
-Generates TorchRL configs from IR:
+Generates TorchRL configs from IR (implemented for export; live training uses backend.py):
 - `TrainerGenerator`: Extracts training requirements
 - `generate_training_script()`: Outputs executable Python
 - `generate_hyperparameters()`: Tuned based on priorities
-- Algorithm selection: SAC (default), TD3, DroQ support
+- Algorithm selection: simplified actor-critic variants (deterministic policy, no learned entropy) inspired by SAC (default), TD3 (twin critics + target smoothing + delayed updates), and DroQ (critic dropout + UTD=4)
 
 ### Inspection & Transparency (`inspector.py`)
 Explains generated artifacts to users:
