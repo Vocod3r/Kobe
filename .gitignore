@@ -9,3 +9,5 @@ dist/
 ide/dist/
 build/
 tests/fuzz/results/
+tests/results/sac_verify/
+tests/results/*.png

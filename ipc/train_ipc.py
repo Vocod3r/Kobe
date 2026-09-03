@@ -28,6 +28,7 @@ def main() -> int:
         priorities = req['priorities']
         algorithm = req.get('algorithm', 'SAC')
         trial_level = req.get('trialLevel', 2)
+        seed = req.get('seed')
 
         def on_progress(msg: dict) -> None:
             emit(msg)
@@ -38,6 +39,7 @@ def main() -> int:
             algorithm=algorithm,
             trial_level=trial_level,
             progress_callback=on_progress,
+            seed=seed,
         )
         emit({'type': 'done', **result})
         return 0

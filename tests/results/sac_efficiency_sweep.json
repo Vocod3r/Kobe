@@ -1,0 +1,272 @@
+{
+  "metadata": {
+    "algorithm": "SAC",
+    "curiosity": 0.5,
+    "safety": 0.5,
+    "comfort": 0.5,
+    "efficiency_values": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "steps_per_run": 5000,
+    "eval_episodes": 50,
+    "seeds": [
+      42,
+      123,
+      999
+    ],
+    "program": "ORIGINAL failed-TD3-sweep multi-sensor program (user-supplied, loop(50))"
+  },
+  "runs": [
+    {
+      "efficiency_slider": 0.1,
+      "seed": 42,
+      "speed": 874.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 118.36,
+      "final_logAlpha": 1.4757697582244873
+    },
+    {
+      "efficiency_slider": 0.1,
+      "seed": 123,
+      "speed": 873.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 73.85,
+      "final_logAlpha": 1.5306838750839233
+    },
+    {
+      "efficiency_slider": 0.1,
+      "seed": 999,
+      "speed": 752.5,
+      "safety": 100.0,
+      "convenience": 34.6,
+      "elapsed_s": 73.7,
+      "final_logAlpha": 1.369150161743164
+    },
+    {
+      "efficiency_slider": 0.2,
+      "seed": 42,
+      "speed": 879.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 80.4,
+      "final_logAlpha": 1.4504122734069824
+    },
+    {
+      "efficiency_slider": 0.2,
+      "seed": 123,
+      "speed": 880.2,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.44,
+      "final_logAlpha": 1.518203616142273
+    },
+    {
+      "efficiency_slider": 0.2,
+      "seed": 999,
+      "speed": 1249.3,
+      "safety": 99.2,
+      "convenience": 24.2,
+      "elapsed_s": 61.39,
+      "final_logAlpha": 1.5218532085418701
+    },
+    {
+      "efficiency_slider": 0.3,
+      "seed": 42,
+      "speed": 883.8,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.2,
+      "final_logAlpha": 1.4247678518295288
+    },
+    {
+      "efficiency_slider": 0.3,
+      "seed": 123,
+      "speed": 887.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.51,
+      "final_logAlpha": 1.5077414512634277
+    },
+    {
+      "efficiency_slider": 0.3,
+      "seed": 999,
+      "speed": 1193.2,
+      "safety": 99.2,
+      "convenience": 23.1,
+      "elapsed_s": 62.78,
+      "final_logAlpha": 1.3362703323364258
+    },
+    {
+      "efficiency_slider": 0.4,
+      "seed": 42,
+      "speed": 891.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.22,
+      "final_logAlpha": 1.393916368484497
+    },
+    {
+      "efficiency_slider": 0.4,
+      "seed": 123,
+      "speed": 890.4,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.51,
+      "final_logAlpha": 1.4999685287475586
+    },
+    {
+      "efficiency_slider": 0.4,
+      "seed": 999,
+      "speed": 1246.6,
+      "safety": 99.2,
+      "convenience": 24.2,
+      "elapsed_s": 64.68,
+      "final_logAlpha": 1.458508849143982
+    },
+    {
+      "efficiency_slider": 0.5,
+      "seed": 42,
+      "speed": 898.7,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 84.61,
+      "final_logAlpha": 1.353524923324585
+    },
+    {
+      "efficiency_slider": 0.5,
+      "seed": 123,
+      "speed": 899.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.27,
+      "final_logAlpha": 1.4941128492355347
+    },
+    {
+      "efficiency_slider": 0.5,
+      "seed": 999,
+      "speed": 1357.8,
+      "safety": 99.1,
+      "convenience": 23.8,
+      "elapsed_s": 62.97,
+      "final_logAlpha": 1.2632423639297485
+    },
+    {
+      "efficiency_slider": 0.6,
+      "seed": 42,
+      "speed": 901.9,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.1,
+      "final_logAlpha": 1.328636884689331
+    },
+    {
+      "efficiency_slider": 0.6,
+      "seed": 123,
+      "speed": 900.5,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 75.17,
+      "final_logAlpha": 1.496011734008789
+    },
+    {
+      "efficiency_slider": 0.6,
+      "seed": 999,
+      "speed": 1267.1,
+      "safety": 99.0,
+      "convenience": 26.3,
+      "elapsed_s": 61.21,
+      "final_logAlpha": 1.3896584510803223
+    },
+    {
+      "efficiency_slider": 0.7,
+      "seed": 42,
+      "speed": 898.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 110.95,
+      "final_logAlpha": 1.305558204650879
+    },
+    {
+      "efficiency_slider": 0.7,
+      "seed": 123,
+      "speed": 904.4,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 152.41,
+      "final_logAlpha": 1.4868158102035522
+    },
+    {
+      "efficiency_slider": 0.7,
+      "seed": 999,
+      "speed": 1237.5,
+      "safety": 99.1,
+      "convenience": 25.1,
+      "elapsed_s": 68.4,
+      "final_logAlpha": 1.4096615314483643
+    },
+    {
+      "efficiency_slider": 0.8,
+      "seed": 42,
+      "speed": 896.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 71.1,
+      "final_logAlpha": 1.2385952472686768
+    },
+    {
+      "efficiency_slider": 0.8,
+      "seed": 123,
+      "speed": 910.2,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 73.06,
+      "final_logAlpha": 1.4842076301574707
+    },
+    {
+      "efficiency_slider": 0.8,
+      "seed": 999,
+      "speed": 1241.3,
+      "safety": 99.2,
+      "convenience": 24.2,
+      "elapsed_s": 68.72,
+      "final_logAlpha": 1.4815884828567505
+    },
+    {
+      "efficiency_slider": 0.9,
+      "seed": 42,
+      "speed": 916.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.85,
+      "final_logAlpha": 1.0455284118652344
+    },
+    {
+      "efficiency_slider": 0.9,
+      "seed": 123,
+      "speed": 917.8,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 65.24,
+      "final_logAlpha": 1.4772191047668457
+    },
+    {
+      "efficiency_slider": 0.9,
+      "seed": 999,
+      "speed": 1236.5,
+      "safety": 99.1,
+      "convenience": 25.1,
+      "elapsed_s": 57.64,
+      "final_logAlpha": 1.4211926460266113
+    }
+  ]
+}
