@@ -1,0 +1,273 @@
+{
+  "metadata": {
+    "algorithm": "SAC",
+    "slider": "safety",
+    "fixed": {
+      "curiosity": 0.5
+    },
+    "values": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "steps_per_run": 5000,
+    "eval_episodes": 50,
+    "seeds": [
+      42,
+      123,
+      999
+    ],
+    "program": "ORIGINAL failed-TD3-sweep multi-sensor program (loop(50))"
+  },
+  "runs": [
+    {
+      "safety_slider": 0.1,
+      "seed": 42,
+      "speed": 1298.4,
+      "safety": 99.2,
+      "convenience": 23.6,
+      "elapsed_s": 79.65,
+      "final_logAlpha": 1.0851919651031494
+    },
+    {
+      "safety_slider": 0.1,
+      "seed": 123,
+      "speed": 1154.2,
+      "safety": 100.0,
+      "convenience": 17.3,
+      "elapsed_s": 71.15,
+      "final_logAlpha": 1.3296778202056885
+    },
+    {
+      "safety_slider": 0.1,
+      "seed": 999,
+      "speed": 1156.1,
+      "safety": 99.1,
+      "convenience": 27.0,
+      "elapsed_s": 64.22,
+      "final_logAlpha": 1.4902942180633545
+    },
+    {
+      "safety_slider": 0.2,
+      "seed": 42,
+      "speed": 916.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 79.13,
+      "final_logAlpha": 1.1314888000488281
+    },
+    {
+      "safety_slider": 0.2,
+      "seed": 123,
+      "speed": 1011.8,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 71.09,
+      "final_logAlpha": 1.366560459136963
+    },
+    {
+      "safety_slider": 0.2,
+      "seed": 999,
+      "speed": 1330.7,
+      "safety": 99.1,
+      "convenience": 24.7,
+      "elapsed_s": 62.95,
+      "final_logAlpha": 1.3318575620651245
+    },
+    {
+      "safety_slider": 0.3,
+      "seed": 42,
+      "speed": 893.4,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 86.12,
+      "final_logAlpha": 1.3088926076889038
+    },
+    {
+      "safety_slider": 0.3,
+      "seed": 123,
+      "speed": 938.4,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.06,
+      "final_logAlpha": 1.4241795539855957
+    },
+    {
+      "safety_slider": 0.3,
+      "seed": 999,
+      "speed": 1265.6,
+      "safety": 99.0,
+      "convenience": 26.3,
+      "elapsed_s": 63.82,
+      "final_logAlpha": 1.3825078010559082
+    },
+    {
+      "safety_slider": 0.4,
+      "seed": 42,
+      "speed": 901.4,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 65.96,
+      "final_logAlpha": 1.3181852102279663
+    },
+    {
+      "safety_slider": 0.4,
+      "seed": 123,
+      "speed": 911.6,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.57,
+      "final_logAlpha": 1.4739458560943604
+    },
+    {
+      "safety_slider": 0.4,
+      "seed": 999,
+      "speed": 1266.4,
+      "safety": 99.0,
+      "convenience": 26.3,
+      "elapsed_s": 59.6,
+      "final_logAlpha": 1.4035511016845703
+    },
+    {
+      "safety_slider": 0.5,
+      "seed": 42,
+      "speed": 898.7,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 79.81,
+      "final_logAlpha": 1.353524923324585
+    },
+    {
+      "safety_slider": 0.5,
+      "seed": 123,
+      "speed": 899.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.21,
+      "final_logAlpha": 1.4941128492355347
+    },
+    {
+      "safety_slider": 0.5,
+      "seed": 999,
+      "speed": 1357.8,
+      "safety": 99.1,
+      "convenience": 23.8,
+      "elapsed_s": 62.76,
+      "final_logAlpha": 1.2632423639297485
+    },
+    {
+      "safety_slider": 0.6,
+      "seed": 42,
+      "speed": 895.7,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.73,
+      "final_logAlpha": 1.3842214345932007
+    },
+    {
+      "safety_slider": 0.6,
+      "seed": 123,
+      "speed": 884.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 66.77,
+      "final_logAlpha": 1.517076849937439
+    },
+    {
+      "safety_slider": 0.6,
+      "seed": 999,
+      "speed": 1168.6,
+      "safety": 99.1,
+      "convenience": 20.9,
+      "elapsed_s": 62.94,
+      "final_logAlpha": 1.2044411897659302
+    },
+    {
+      "safety_slider": 0.7,
+      "seed": 42,
+      "speed": 887.6,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.54,
+      "final_logAlpha": 1.4263248443603516
+    },
+    {
+      "safety_slider": 0.7,
+      "seed": 123,
+      "speed": 875.6,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.52,
+      "final_logAlpha": 1.5313596725463867
+    },
+    {
+      "safety_slider": 0.7,
+      "seed": 999,
+      "speed": 1250.3,
+      "safety": 99.1,
+      "convenience": 25.1,
+      "elapsed_s": 60.63,
+      "final_logAlpha": 1.4394416809082031
+    },
+    {
+      "safety_slider": 0.8,
+      "seed": 42,
+      "speed": 880.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 66.81,
+      "final_logAlpha": 1.455561637878418
+    },
+    {
+      "safety_slider": 0.8,
+      "seed": 123,
+      "speed": 866.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.29,
+      "final_logAlpha": 1.5560903549194336
+    },
+    {
+      "safety_slider": 0.8,
+      "seed": 999,
+      "speed": 1210.0,
+      "safety": 99.1,
+      "convenience": 26.7,
+      "elapsed_s": 71.15,
+      "final_logAlpha": 1.348905324935913
+    },
+    {
+      "safety_slider": 0.9,
+      "seed": 42,
+      "speed": 873.8,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 71.22,
+      "final_logAlpha": 1.4816689491271973
+    },
+    {
+      "safety_slider": 0.9,
+      "seed": 123,
+      "speed": 864.5,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 76.87,
+      "final_logAlpha": 1.5629466772079468
+    },
+    {
+      "safety_slider": 0.9,
+      "seed": 999,
+      "speed": 1107.3,
+      "safety": 99.1,
+      "convenience": 27.1,
+      "elapsed_s": 118.36,
+      "final_logAlpha": 1.5005935430526733
+    }
+  ]
+}

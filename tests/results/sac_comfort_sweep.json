@@ -1,0 +1,273 @@
+{
+  "metadata": {
+    "algorithm": "SAC",
+    "slider": "comfort",
+    "fixed": {
+      "curiosity": 0.5
+    },
+    "values": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "steps_per_run": 5000,
+    "eval_episodes": 50,
+    "seeds": [
+      42,
+      123,
+      999
+    ],
+    "program": "ORIGINAL failed-TD3-sweep multi-sensor program (loop(50))"
+  },
+  "runs": [
+    {
+      "comfort_slider": 0.1,
+      "seed": 42,
+      "speed": 933.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 248.76,
+      "final_logAlpha": 0.9068914651870728
+    },
+    {
+      "comfort_slider": 0.1,
+      "seed": 123,
+      "speed": 868.0,
+      "safety": 100.0,
+      "convenience": 16.3,
+      "elapsed_s": 205.51,
+      "final_logAlpha": 0.870708167552948
+    },
+    {
+      "comfort_slider": 0.1,
+      "seed": 999,
+      "speed": 831.9,
+      "safety": 100.0,
+      "convenience": 31.0,
+      "elapsed_s": 120.52,
+      "final_logAlpha": 0.10537669062614441
+    },
+    {
+      "comfort_slider": 0.2,
+      "seed": 42,
+      "speed": 1621.9,
+      "safety": 100.0,
+      "convenience": 15.5,
+      "elapsed_s": 66.77,
+      "final_logAlpha": 0.03186868131160736
+    },
+    {
+      "comfort_slider": 0.2,
+      "seed": 123,
+      "speed": 943.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 65.22,
+      "final_logAlpha": 1.2604527473449707
+    },
+    {
+      "comfort_slider": 0.2,
+      "seed": 999,
+      "speed": 1038.2,
+      "safety": 100.0,
+      "convenience": 29.7,
+      "elapsed_s": 66.92,
+      "final_logAlpha": 0.03025045059621334
+    },
+    {
+      "comfort_slider": 0.3,
+      "seed": 42,
+      "speed": 935.7,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 88.24,
+      "final_logAlpha": 0.9561334848403931
+    },
+    {
+      "comfort_slider": 0.3,
+      "seed": 123,
+      "speed": 916.5,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 73.87,
+      "final_logAlpha": 1.4609558582305908
+    },
+    {
+      "comfort_slider": 0.3,
+      "seed": 999,
+      "speed": 1282.0,
+      "safety": 99.0,
+      "convenience": 24.5,
+      "elapsed_s": 62.31,
+      "final_logAlpha": 1.346421718597412
+    },
+    {
+      "comfort_slider": 0.4,
+      "seed": 42,
+      "speed": 910.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 73.57,
+      "final_logAlpha": 1.265016794204712
+    },
+    {
+      "comfort_slider": 0.4,
+      "seed": 123,
+      "speed": 901.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.44,
+      "final_logAlpha": 1.4787689447402954
+    },
+    {
+      "comfort_slider": 0.4,
+      "seed": 999,
+      "speed": 1221.1,
+      "safety": 99.1,
+      "convenience": 25.8,
+      "elapsed_s": 60.91,
+      "final_logAlpha": 1.4493408203125
+    },
+    {
+      "comfort_slider": 0.5,
+      "seed": 42,
+      "speed": 898.7,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 72.65,
+      "final_logAlpha": 1.353524923324585
+    },
+    {
+      "comfort_slider": 0.5,
+      "seed": 123,
+      "speed": 899.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 66.51,
+      "final_logAlpha": 1.4941128492355347
+    },
+    {
+      "comfort_slider": 0.5,
+      "seed": 999,
+      "speed": 1357.8,
+      "safety": 99.1,
+      "convenience": 23.8,
+      "elapsed_s": 60.13,
+      "final_logAlpha": 1.2632423639297485
+    },
+    {
+      "comfort_slider": 0.6,
+      "seed": 42,
+      "speed": 882.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.88,
+      "final_logAlpha": 1.4285773038864136
+    },
+    {
+      "comfort_slider": 0.6,
+      "seed": 123,
+      "speed": 884.8,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 66.53,
+      "final_logAlpha": 1.5267808437347412
+    },
+    {
+      "comfort_slider": 0.6,
+      "seed": 999,
+      "speed": 1168.5,
+      "safety": 99.1,
+      "convenience": 26.2,
+      "elapsed_s": 62.89,
+      "final_logAlpha": 1.500120997428894
+    },
+    {
+      "comfort_slider": 0.7,
+      "seed": 42,
+      "speed": 875.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 67.72,
+      "final_logAlpha": 1.4696991443634033
+    },
+    {
+      "comfort_slider": 0.7,
+      "seed": 123,
+      "speed": 873.9,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 71.91,
+      "final_logAlpha": 1.5562893152236938
+    },
+    {
+      "comfort_slider": 0.7,
+      "seed": 999,
+      "speed": 1253.1,
+      "safety": 99.2,
+      "convenience": 24.2,
+      "elapsed_s": 63.07,
+      "final_logAlpha": 1.543351411819458
+    },
+    {
+      "comfort_slider": 0.8,
+      "seed": 42,
+      "speed": 867.1,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 71.34,
+      "final_logAlpha": 1.5075961351394653
+    },
+    {
+      "comfort_slider": 0.8,
+      "seed": 123,
+      "speed": 861.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 69.03,
+      "final_logAlpha": 1.5861023664474487
+    },
+    {
+      "comfort_slider": 0.8,
+      "seed": 999,
+      "speed": 1271.5,
+      "safety": 99.0,
+      "convenience": 26.3,
+      "elapsed_s": 57.86,
+      "final_logAlpha": 1.486670732498169
+    },
+    {
+      "comfort_slider": 0.9,
+      "seed": 42,
+      "speed": 864.0,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 72.31,
+      "final_logAlpha": 1.5279247760772705
+    },
+    {
+      "comfort_slider": 0.9,
+      "seed": 123,
+      "speed": 855.3,
+      "safety": 100.0,
+      "convenience": 18.1,
+      "elapsed_s": 68.16,
+      "final_logAlpha": 1.6021465063095093
+    },
+    {
+      "comfort_slider": 0.9,
+      "seed": 999,
+      "speed": 1216.6,
+      "safety": 99.1,
+      "convenience": 24.4,
+      "elapsed_s": 65.85,
+      "final_logAlpha": 1.4039764404296875
+    }
+  ]
+}

@@ -109,7 +109,46 @@ else (program, seeds, slider values, step budget, eval protocol) is held fixed,
 this re-verification confirms the diagnosed root cause — **lack of exploration** —
 was the actual cause, not a coincidental correlation.
 
-## 4. Honest residual limitation: reward dynamic range, not exploration
+## 4. Slider-by-slider validation under real SAC
+
+After the efficiency re-verification, the safety and comfort sliders were swept
+with the same pipeline (9 values × 3 seeds, 5000 steps/run, 50 eval episodes,
+same loop(50) multi-sensor program, other sliders held at 0.5). Actual status of
+all four sliders:
+
+- **Efficiency — partial success.** Zero exact-repetition seed-locked plateaus
+  (down from 6 under TD3). Within-seed correlation efficiency→speed +0.39, with
+  two of three seeds individually significant (p = 0.0004, p < 0.0001). The
+  pooled 27-run correlation is not significant (r = +0.2168, p = 0.28), partly
+  a low seed count, and the effect is small for two of three seeds (~5% speed
+  change across the full slider range), attributed to comfort's jerk penalty
+  limiting reward dynamic range (see §5).
+
+- **Safety — confirmed working.** Zero seed-locked plateaus (down from 5 under
+  TD3 on the same multiplicative reward design). Within-seed correlation
+  safety→speed −0.61 — the correct direction (higher safety attenuates the
+  speed reward, so the robot moves less), with one seed individually
+  significant (p = 0.004). The safety% (collision-free rate) correlation is
+  uninformative by construction: the collision rate sits at a ~99–100% ceiling
+  across every tested slider value in this environment, leaving no room for
+  that metric to move. The speed correlation is the valid test of slider
+  responsiveness here, and it passes.
+
+- **Comfort — clean null result.** Per-seed correlations disagree in sign
+  (seed 42 +0.41, seed 123 +0.55, seed 999 −0.66 on comfort→comfort%). Root
+  cause: the jerk penalty already makes near-zero movement reward-optimal at
+  comfort ≥ ~0.3, so the 0.1–0.9 sweep mostly probes an already-saturated
+  regime with limited dynamic range below that threshold. The comfort% proxy
+  metric is also clustered/low-resolution here (pinned at ~18.1 for seeds 42
+  and 123 across most of the sweep), so the null result is both regime- and
+  metric-limited rather than evidence of an exploration failure.
+
+- **Curiosity — not evaluated with these correlation sweeps.** Curiosity governs
+  exploration diversity, which a reward-correlation sweep cannot measure; it
+  requires a different experimental design and is out of scope for this pass
+  (see Future work).
+
+## 5. Honest residual limitation: reward dynamic range, not exploration
 
 The re-verification does **not** claim the efficiency slider now produces a large
 or significant population-level effect:
@@ -133,7 +172,7 @@ rebalancing the comfort/efficiency reward weights so the efficiency slider has
 practical range at these settings — rather than something to be silently tuned
 away in this pass.
 
-## 5. Motivating context (kept for the record)
+## 6. Motivating context (kept for the record)
 
 The two earlier experimental threads are retained here because they motivated
 the SAC rewrite and anchor the diagnosis:
@@ -149,7 +188,7 @@ the SAC rewrite and anchor the diagnosis:
   themselves.
 
 Neither thread is an unresolved dead end: both are consistent with, and were
-resolved by, the exploration fix verified in Sections 2–3.
+resolved by, the exploration fix verified in Sections 2–4.
 
 ## Future work
 
@@ -158,5 +197,8 @@ resolved by, the exploration fix verified in Sections 2–3.
   at default settings, then re-run the efficiency and safety sweeps.
 - Increase seed count (and report pooled power) if a population-level
   efficiency→speed effect is to be established beyond the per-seed level.
+- Design a curiosity experiment around exploration diversity (e.g., entropy
+  or state-coverage metrics during training) rather than reward correlation,
+  which is the wrong instrument for that slider.
 - Optionally extend the stochastic policy head to TD3/DroQ (or re-run their
   comparisons under real SAC) once the reward-dynamic-range work is done.
