@@ -9,5 +9,6 @@ dist/
 ide/dist/
 build/
 tests/fuzz/results/
-tests/results/sac_verify/
+tests/results/sac_verify/*
+!tests/results/sac_verify/gate5_seed_*.json
 tests/results/*.png
