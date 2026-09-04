@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BlockEditor from './BlockEditor';
 
-const SLIDER_KEYS = ['curiosity', 'safety', 'comfort', 'efficiency'];
-const TAB_KEYS = ['diagnostics', 'ir', 'generated', 'sliders'];
+const TAB_KEYS = ['diagnostics', 'ir', 'generated'];
+const POLICY_KEYS = ['curiosity', 'safety', 'comfort', 'efficiency'];
 
 function App() {
   const [source, setSource] = useState('');
   const [compileResult, setCompileResult] = useState(null);
   const [activeTab, setActiveTab] = useState('diagnostics');
   const [generatedFile, setGeneratedFile] = useState('train');
-  const [priorities, setPriorities] = useState(null);
-  const [sliderDescriptions, setSliderDescriptions] = useState({});
   const [training, setTraining] = useState(false);
   const [trainProgress, setTrainProgress] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -26,8 +24,6 @@ function App() {
       setError(null);
       const result = await window.kobe.compile({ source: text, trialLevel: 2, target: 'rl' });
       setCompileResult(result);
-      if (result.priorities) setPriorities(result.priorities);
-      if (result.sliderDescriptions) setSliderDescriptions(result.sliderDescriptions);
     } catch (err) {
       setError(err.message);
     }
@@ -38,10 +34,6 @@ function App() {
     debounceRef.current = setTimeout(() => compile(source), 400);
     return () => clearTimeout(debounceRef.current);
   }, [source, compile]);
-
-  const handlePriorityChange = (key, value) => {
-    setPriorities((prev) => ({ ...prev, [key]: parseFloat(value) }));
-  };
 
   const handleTrain = async () => {
     if (!compileResult || compileResult.blocked || !compileResult.ir) return;
@@ -57,7 +49,7 @@ function App() {
     try {
       const result = await window.kobe.train({
         ir: compileResult.ir,
-        priorities: priorities || compileResult.priorities,
+        priorities: compileResult.priorities,
         algorithm: compileResult.algorithm || 'SAC',
         trialLevel: 2,
       });
@@ -73,25 +65,24 @@ function App() {
   const blocked = compileResult?.blocked;
   const diagnostics = compileResult?.diagnostics || [];
   const codeFiles = compileResult?.code || {};
+  const priorities = compileResult?.priorities;
+  const algorithm = compileResult?.algorithm || 'SAC';
+
+  const progressPct = trainProgress
+    ? (trainProgress.step / trainProgress.total) * 100
+    : 0;
 
   return (
     <div className="app">
       <header className="toolbar">
         <h1>Kobe IDE</h1>
-        <span className="chip">{compileResult?.algorithm || 'SAC'}</span>
+        <span className="chip">{algorithm}</span>
         <span className="chip">{compileResult?.hardware?.target || 'EV3'}</span>
         <div className="spacer" />
-        <button
-          className="secondary"
-          onClick={() => compile(source)}
-          disabled={training}
-        >
+        <button className="secondary" onClick={() => compile(source)} disabled={training}>
           Recompile
         </button>
-        <button
-          onClick={handleTrain}
-          disabled={training || blocked || !compileResult?.ir}
-        >
+        <button onClick={handleTrain} disabled={training || blocked || !compileResult?.ir}>
           {training ? 'Training…' : 'Train Robot'}
         </button>
       </header>
@@ -101,6 +92,70 @@ function App() {
           <div className="pane-header">Kobe Program</div>
           <div className="editor-wrap">
             <BlockEditor onSourceChange={setSource} />
+          </div>
+
+          <div className="sim-panel">
+            <div className="pane-header">Simulation</div>
+            <div className="sim-body">
+              {error && <p className="sim-error">{error}</p>}
+
+              {!error && training && (
+                <>
+                  <div className="sim-line">
+                    <span>Training {algorithm}…</span>
+                    {trainProgress && (
+                      <span>
+                        Step {trainProgress.step.toLocaleString()} /{' '}
+                        {trainProgress.total.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="progress-bar">
+                    <div className="fill" style={{ width: `${progressPct}%` }} />
+                  </div>
+                </>
+              )}
+
+              {!error && !training && metrics && (
+                <div className="metrics">
+                  <div className="metric">
+                    <div className="value">{metrics.speed}%</div>
+                    <div className="label">Speed</div>
+                  </div>
+                  <div className="metric">
+                    <div className="value">{metrics.safety}%</div>
+                    <div className="label">Safety</div>
+                  </div>
+                  <div className="metric">
+                    <div className="value">{metrics.convenience}%</div>
+                    <div className="label">Comfort</div>
+                  </div>
+                </div>
+              )}
+
+              {!error && !training && !metrics && (
+                <div className="sim-idle">
+                  <p className="empty">
+                    {blocked
+                      ? 'Fix warnings, then press Train Robot.'
+                      : compileResult?.ir
+                        ? 'Press Train Robot to run the simulator.'
+                        : 'Build a program to begin.'}
+                  </p>
+                  {priorities && (
+                    <div className="priority-readout">
+                      {POLICY_KEYS.map((k) => (
+                        <div key={k} className="priority-row">
+                          <span>{k}</span>
+                          <span>{Number(priorities[k] ?? 0).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <span className="hint-text">Set these in the policy block.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -148,7 +203,7 @@ function App() {
                   {['client', 'environment', 'train'].map((f) => (
                     <button
                       key={f}
-                      className={`secondary ${generatedFile === f ? '' : ''}`}
+                      className="secondary"
                       onClick={() => setGeneratedFile(f)}
                       style={{ opacity: generatedFile === f ? 1 : 0.6 }}
                     >
@@ -163,52 +218,6 @@ function App() {
                 )}
               </>
             )}
-
-            {activeTab === 'sliders' && (
-              <div className="sliders">
-                {SLIDER_KEYS.map((key) => {
-                  const desc = sliderDescriptions[key] || {};
-                  const val = priorities?.[key] ?? compileResult?.priorities?.[key] ?? 0.5;
-                  return (
-                    <div key={key} className="slider-row">
-                      <label>
-                        <span>{key}</span>
-                        <span>{val.toFixed(2)}</span>
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={val}
-                        onChange={(e) => handlePriorityChange(key, e.target.value)}
-                      />
-                      <div className="slider-effect">
-                        <strong>{desc.param || '—'}</strong>
-                        {desc.effect ? ` — ${desc.effect}` : ''}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {metrics && (
-                  <div className="metrics">
-                    <div className="metric">
-                      <div className="value">{metrics.speed}%</div>
-                      <div className="label">Speed</div>
-                    </div>
-                    <div className="metric">
-                      <div className="value">{metrics.safety}%</div>
-                      <div className="label">Safety</div>
-                    </div>
-                    <div className="metric">
-                      <div className="value">{metrics.convenience}%</div>
-                      <div className="label">Comfort</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </aside>
       </div>
@@ -216,18 +225,10 @@ function App() {
       <footer className="status-bar">
         {error && <span style={{ color: 'var(--error)' }}>{error}</span>}
         {!error && blocked && <span className="blocked">Training blocked — fix warnings first</span>}
-        {!error && !blocked && compileResult?.ir && <span className="ready">Ready to train</span>}
-        {training && trainProgress && (
-          <>
-            <span>Step {trainProgress.step.toLocaleString()} / {trainProgress.total.toLocaleString()}</span>
-            <div className="progress-bar">
-              <div
-                className="fill"
-                style={{ width: `${(trainProgress.step / trainProgress.total) * 100}%` }}
-              />
-            </div>
-          </>
+        {!error && !blocked && compileResult?.ir && !training && (
+          <span className="ready">Ready to train</span>
         )}
+        {!error && training && <span>Running simulator…</span>}
       </footer>
     </div>
   );
