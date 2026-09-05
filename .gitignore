@@ -8,7 +8,9 @@ ide/node_modules/
 dist/
 ide/dist/
 build/
-tests/fuzz/results/
+tests/fuzz/results/*
+!tests/fuzz/results/final_verification/
+!tests/fuzz/results/final_verification/*
 tests/results/sac_verify/*
 !tests/results/sac_verify/gate5_seed_*.json
 tests/results/*.png

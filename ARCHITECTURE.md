@@ -62,7 +62,7 @@ Complete specification of Kobe system design and timeline to publication.
 
 **Validation:**
 - Gate 1: Parser (10/10 golden tests parse)
-- Gate 2: Compiler (10/10 trace equivalence)
+- Gate 2: Compiler (10/10 golden + fuzz 200/200 inclusive, 0 real failures)
 - Gate 3: Environment (generated env ≡ reference)
 - Gate 4: Training (policy trains successfully)
 - Gate 5: Study (system ready for humans)
@@ -84,10 +84,12 @@ Complete specification of Kobe system design and timeline to publication.
 - ✓ Test infrastructure (TESTING.md)
 
 ### In Progress (Aug 28-30)
-- ⚙ Fix golden test failures (6/10 currently failing; not compiler bugs)
+- ✓ Golden test suite 10/10 passing; fuzz suite 200/200 inclusive (130 strict +
+  70 capped-equivalent), 0 real failures (loop_until polarity, observe
+  cap-check, and break loop_stack fixes landed)
 - ⚙ Validate environment generation produces correct Gymnasium spaces
 - ⚙ Validate trainer generation works end-to-end
-- ⚙ Gate 2 certification (all validators pass)
+- ✓ Gate 2 certified (all validators pass; gate2_validator exit 0)
 
 ### Upcoming (Aug 31 - Sep 30)
 - Sep 3-5: End-to-end pipeline validation (compile → generate → train → evaluate)

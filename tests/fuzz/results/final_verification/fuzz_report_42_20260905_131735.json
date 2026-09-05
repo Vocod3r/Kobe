@@ -1,0 +1,24 @@
+{
+  "total_programs": 200,
+  "strict_pass_count": 130,
+  "capped_equivalent_count": 70,
+  "inclusive_pass_count": 200,
+  "fail_count": 0,
+  "strict_pass_rate_pct": 65.0,
+  "inclusive_pass_rate_pct": 100.0,
+  "real_fail_rate_pct": 0.0,
+  "grammar_coverage": {
+    "sensors_exercised_pct": 100.0,
+    "comparators_exercised_pct": 100.0,
+    "loop_forms_used": [
+      "until",
+      "for"
+    ],
+    "branch_forms_used": [
+      "if",
+      "observe"
+    ],
+    "max_nesting_depth_reached": 0
+  },
+  "failures_by_category": {}
+}
